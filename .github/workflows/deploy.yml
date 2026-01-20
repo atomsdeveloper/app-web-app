@@ -28,13 +28,13 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Define variáveis baseado na branch
+            # Lógica de seleção de pasta baseada na Branch
             if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              DIR="/var/www/app-web-app-prod"
-              APP_NAME="app-web-app-prod"
+              DIR="/var/www/dashtechstore-prod"
+              APP_NAME="dashtech-prod"
             else
-              DIR="/var/www/app-web-app-dev"
-              APP_NAME="app-web-app-dev"
+              DIR="/var/www/dashtechstore-dev"
+              APP_NAME="dashtech-dev"
             fi
 
             # Processo de Deploy
