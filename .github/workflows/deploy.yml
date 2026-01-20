@@ -30,11 +30,11 @@ jobs:
           script: |
             # Define variáveis baseado na branch
             if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              DIR="/var/www/meu-saas-prod"
-              APP_NAME="saas-prod"
+              DIR="/var/www/app-web-app-prod"
+              APP_NAME="app-web-app-prod"
             else
-              DIR="/var/www/meu-saas-dev"
-              APP_NAME="saas-dev"
+              DIR="/var/www/app-web-app-dev"
+              APP_NAME="app-web-app-dev"
             fi
 
             # Processo de Deploy
@@ -42,7 +42,7 @@ jobs:
             
             # Se o diretório não existe, clona. Se existe, pull.
             if [ ! -d "$DIR/.git" ]; then
-              git clone git@github.com:SEU_USUARIO/meu-saas.git $DIR
+              git clone git@github.com:atomsdeveloper/app-web-app.git $DIR
               cd $DIR
             else
               cd $DIR
