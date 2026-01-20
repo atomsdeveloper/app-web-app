@@ -1,0 +1,63 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: ["main", "develop"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # 1. Define qual pasta e qual App usar baseado na Branch
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              TARGET_DIR="/var/www/dashtechstore-prod"
+              PM2_NAME="dashtech-prod"
+            else
+              TARGET_DIR="/var/www/dashtechstore-dev"
+              PM2_NAME="dashtech-dev"
+            fi
+
+            echo "Iniciando Deploy em: $TARGET_DIR (App: $PM2_NAME)"
+
+            # 2. Clona ou Atualiza o Repositório
+            if [ ! -d "$TARGET_DIR/.git" ]; then
+              echo "Clonando repositório pela primeira vez..."
+              git clone git@github.com:SEU_USUARIO/NOME_DO_REPO.git $TARGET_DIR
+              cd $TARGET_DIR
+            else
+              echo "Atualizando código existente..."
+              cd $TARGET_DIR
+              git pull origin ${{ github.ref_name }}
+            fi
+
+            # 3. Instalação e Build
+            echo "Instalando dependências..."
+            npm ci
+
+            echo "Gerando Prisma Client..."
+            npx prisma generate
+
+            echo "Construindo o Next.js..."
+            npm run build
+
+            # 4. Reinicia o Servidor no PM2
+            echo "Reiniciando PM2..."
+            pm2 reload ecosystem.config.js --only $PM2_NAME || pm2 start ecosystem.config.js --only $PM2_NAME
+
+            echo "Deploy Concluído com Sucesso!"
