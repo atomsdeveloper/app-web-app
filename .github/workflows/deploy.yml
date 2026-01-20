@@ -1,0 +1,58 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Instala e Testa antes de enviar (Opcional, mas recomendado)
+      # - name: Run Tests
+      #   run: |
+      #     npm ci
+      #     npm run test
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Define variáveis baseado na branch
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              DIR="/var/www/meu-saas-prod"
+              APP_NAME="saas-prod"
+            else
+              DIR="/var/www/meu-saas-dev"
+              APP_NAME="saas-dev"
+            fi
+
+            # Processo de Deploy
+            echo "Deploying to $DIR..."
+            
+            # Se o diretório não existe, clona. Se existe, pull.
+            if [ ! -d "$DIR/.git" ]; then
+              git clone git@github.com:SEU_USUARIO/meu-saas.git $DIR
+              cd $DIR
+            else
+              cd $DIR
+              git pull origin ${{ github.ref_name }}
+            fi
+
+            # Instalação e Build
+            npm ci
+            npx prisma generate
+            npm run build
+            
+            # Restart PM2
+            pm2 reload ecosystem.config.js --only $APP_NAME
