@@ -46,7 +46,7 @@ jobs:
               cd $DIR
             else
               cd $DIR
-              git pull origin ${{ github.ref_name }}
+              git pull origin ${{ github.ref_name }} --rebase
             fi
 
             # Instalação e Build
